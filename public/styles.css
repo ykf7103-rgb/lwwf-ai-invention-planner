@@ -508,6 +508,12 @@ input:focus, textarea:focus, select:focus {
     padding: 12px;
   }
 
+  .workspace {
+    max-width: 366px;
+    margin-left: 0;
+    margin-right: auto;
+  }
+
   .introBand {
     grid-template-columns: 1fr;
     padding: 18px 14px;
