@@ -48,6 +48,11 @@
           </div>
 
           <label>
+            老師姓名
+            <input id="teacherName" type="text" autocomplete="name" placeholder="例：陳老師">
+          </label>
+
+          <label>
             主題方向
             <select id="theme">
               <option value="校園安全">校園安全</option>
@@ -58,6 +63,15 @@
               <option value="中華文化">中華文化</option>
               <option value="關愛校園">關愛校園</option>
               <option value="生態保育">生態保育</option>
+              <option value="課室管理">課室管理</option>
+              <option value="午膳秩序">午膳秩序</option>
+              <option value="圖書館服務">圖書館服務</option>
+              <option value="運動與體能">運動與體能</option>
+              <option value="情緒健康">情緒健康</option>
+              <option value="校園導賞">校園導賞</option>
+              <option value="照顧特殊學習需要">照顧特殊學習需要</option>
+              <option value="家校合作">家校合作</option>
+              <option value="AI倫理與數碼公民">AI倫理與數碼公民</option>
               <option value="其他">其他</option>
             </select>
           </label>
@@ -69,7 +83,29 @@
 
           <label>
             年級/學生對象
-            <input id="grade" type="text" value="P5-P6">
+            <select id="grade">
+              <option value="P5-P6">P5-P6</option>
+              <option value="P1-P2">P1-P2</option>
+              <option value="P3-P4">P3-P4</option>
+              <option value="P4-P6">P4-P6</option>
+              <option value="全校學生">全校學生</option>
+              <option value="圖書館服務生">圖書館服務生</option>
+              <option value="STEAM拔尖小組">STEAM拔尖小組</option>
+            </select>
+          </label>
+
+          <label>
+            常見問題選項
+            <select id="problemPreset">
+              <option value="">自訂/不套用</option>
+              <option value="學生在走廊或轉角位容易碰撞，老師希望有即時提示和數據記錄。">走廊轉角安全提示</option>
+              <option value="午膳或排隊時人流太多，老師希望知道高峰時間並給學生提示。">午膳/排隊人流管理</option>
+              <option value="班房環境太嘈、太熱或光線不足，影響學習專注。">課室環境監測</option>
+              <option value="同學難以選擇合適圖書，希望 AI 根據興趣作推薦。">AI圖書推薦</option>
+              <option value="學生對中華文化展品認識不足，希望有互動導賞。">中華文化互動導賞</option>
+              <option value="學生未必懂得表達心情，希望有低壓力的關愛回饋方式。">情緒關愛提示</option>
+              <option value="回收分類容易出錯，希望用 AI 及感測器協助分類和計分。">環保回收分類</option>
+            </select>
           </label>
 
           <label>
@@ -78,13 +114,48 @@
           </label>
 
           <label>
+            AI 網站功能選項
+            <select id="aiPreset">
+              <option value="">自訂/不套用</option>
+              <option value="用 laptop 開啟網站，老師或學生輸入數據後，AI 分析風險、生成改善建議、顯示圖表和展示稿。">資料分析及改善建議</option>
+              <option value="網站用 AI 把學生輸入的內容變成作品構思、步驟清單、評分和比賽簡介。">作品構思生成器</option>
+              <option value="網站連接 QR 或表單記錄感測結果，AI 產生趨勢圖、提示語和反思問題。">IoT數據儀表板</option>
+              <option value="網站讓學生上載相片或選項，AI 進行分類、推薦或安全提醒。">AI分類/推薦工具</option>
+              <option value="網站生成展覽用海報文字、口頭匯報稿、評判問答和改良建議。">展覽匯報助手</option>
+            </select>
+          </label>
+
+          <label>
             AI 網站可做到的功能
             <textarea id="aiWebsite" rows="4" placeholder="例：用 laptop 開啟網站，輸入/上載資料後，AI 分析風險、給建議、展示圖表。"></textarea>
           </label>
 
           <label>
+            硬件組合選項
+            <select id="hardwarePreset">
+              <option value="">自訂/不套用</option>
+              <option value="micro:bit + Robotbit + ToF距離感測器 + LED/蜂鳴器，偵測距離並觸發提示。">距離安全提示</option>
+              <option value="micro:bit + IOBit + 光線/溫度/聲音感測器，監測課室環境並以 LED 顯示狀態。">課室環境監測</option>
+              <option value="micro:bit + Robotbit + 伺服摩打 + LED，製作可動模型或提示閘門。">可動模型展示</option>
+              <option value="micro:bit + KittenBot KOI AI Camera + Robotbit，進行影像分類、QR 掃描或物件辨識。">AI鏡頭分類</option>
+              <option value="micro:bit + 按鈕/觸摸輸入 + OLED/LED，讓學生即時選擇心情、答案或服務需要。">互動輸入站</option>
+            </select>
+          </label>
+
+          <label>
             Micro:bit / Sensor 實體裝置
             <textarea id="hardware" rows="4" placeholder="例：micro:bit + Robotbit + ToF距離感測器 + LED/蜂鳴器，偵測距離並觸發提示。"></textarea>
+          </label>
+
+          <label>
+            IoT / 材料選項
+            <select id="iotPreset">
+              <option value="">自訂/不套用</option>
+              <option value="感測器數據經 USB 序列埠或 QR 表單記錄到網站，展示即時分數；材料以紙板、LED、杜邦線和熱熔膠為主。">USB/QR記錄數據</option>
+              <option value="micro:bit 偵測事件後顯示編號，學生在網站輸入編號，AI 生成即時建議和記錄。">事件編號互動</option>
+              <option value="裝置以 LED、蜂鳴器或摩打作現場提示，網站負責分析、評分和生成展示內容。">現場提示 + 網站分析</option>
+              <option value="作品只保存示範數據，不收集學生姓名；以匿名統計作展示。">匿名私隱安全</option>
+            </select>
           </label>
 
           <label>
@@ -111,6 +182,7 @@
               <button id="downloadJsonBtn" type="button" title="下載JSON">JSON</button>
               <button id="downloadMdBtn" type="button" title="下載Markdown">MD</button>
               <button id="printBtn" type="button" title="列印或另存PDF">列印</button>
+              <button id="confirmBtn" type="button" class="primary" title="確認所選結果">確認</button>
             </div>
           </div>
 
@@ -120,14 +192,17 @@
             <button type="button" class="tab" data-tab="proposal">構思書</button>
             <button type="button" class="tab" data-tab="image">預覽圖</button>
             <button type="button" class="tab" data-tab="sensors">硬件</button>
+            <button type="button" class="tab" data-tab="records">我的記錄</button>
           </nav>
 
           <div id="status" class="statusLine">準備就緒</div>
+          <div class="confirmHint">生成後請至少勾選或套用一個結果，再按「確認」。已確認結果會顯示在「我的記錄」。</div>
           <div id="suggestions" class="tabPanel active"></div>
           <div id="score" class="tabPanel"></div>
           <div id="proposal" class="tabPanel"></div>
           <div id="image" class="tabPanel"></div>
           <div id="sensors" class="tabPanel"></div>
+          <div id="records" class="tabPanel"></div>
         </section>
       </form>
     </section>

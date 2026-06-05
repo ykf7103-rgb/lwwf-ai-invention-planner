@@ -3,19 +3,26 @@ const state = {
   sourceContext: {},
   lastResult: null,
   selectedSuggestion: null,
+  checkedSuggestions: [],
   activeTab: "suggestions"
 };
 
 const $ = (id) => document.getElementById(id);
+const RECORD_KEY = "lwwf-ai-invention-records-v1";
 
 const fields = {
   pass: $("teacherPass"),
+  teacherName: $("teacherName"),
   theme: $("theme"),
   subject: $("subject"),
   grade: $("grade"),
+  problemPreset: $("problemPreset"),
   problem: $("problem"),
+  aiPreset: $("aiPreset"),
   aiWebsite: $("aiWebsite"),
+  hardwarePreset: $("hardwarePreset"),
   hardware: $("hardware"),
+  iotPreset: $("iotPreset"),
   iot: $("iot")
 };
 
@@ -23,20 +30,28 @@ init();
 
 function init() {
   fields.pass.value = sessionStorage.getItem("teacherPass") || "";
+  fields.teacherName.value = localStorage.getItem("teacherName") || "";
   $("savePass").addEventListener("click", savePass);
   $("healthBtn").addEventListener("click", checkHealth);
   $("suggestBtn").addEventListener("click", suggestThemes);
   $("scoreBtn").addEventListener("click", scoreConcept);
   $("proposalBtn").addEventListener("click", buildProposal);
   $("imageBtn").addEventListener("click", generatePreviewImage);
+  $("confirmBtn").addEventListener("click", confirmCurrentSelection);
   $("copyBtn").addEventListener("click", copyCurrent);
   $("downloadJsonBtn").addEventListener("click", () => downloadCurrent("json"));
   $("downloadMdBtn").addEventListener("click", () => downloadCurrent("md"));
   $("printBtn").addEventListener("click", () => window.print());
+  fields.teacherName.addEventListener("change", () => localStorage.setItem("teacherName", fields.teacherName.value.trim()));
+  fields.problemPreset.addEventListener("change", () => applyPreset(fields.problemPreset, fields.problem));
+  fields.aiPreset.addEventListener("change", () => applyPreset(fields.aiPreset, fields.aiWebsite));
+  fields.hardwarePreset.addEventListener("change", () => applyPreset(fields.hardwarePreset, fields.hardware));
+  fields.iotPreset.addEventListener("change", () => applyPreset(fields.iotPreset, fields.iot));
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => activateTab(tab.dataset.tab));
   });
   renderEmpty();
+  renderRecords();
   loadCatalog();
 }
 
@@ -49,7 +64,134 @@ async function loadCatalog() {
 
 function savePass() {
   sessionStorage.setItem("teacherPass", fields.pass.value);
+  localStorage.setItem("teacherName", fields.teacherName.value.trim());
   setStatus("本次通行碼已保存。", "ok");
+}
+
+function applyPreset(select, target) {
+  if (!select.value) return;
+  target.value = select.value;
+  setStatus("已套用下拉式選項，可再自行修改。", "ok");
+}
+
+function requireTeacherName() {
+  const teacherName = fields.teacherName.value.trim();
+  if (!teacherName) {
+    setStatus("請先在上方輸入老師姓名，然後再生成。", "err");
+    fields.teacherName.focus();
+    throw new Error("Missing teacher name");
+  }
+  localStorage.setItem("teacherName", teacherName);
+  return teacherName;
+}
+
+function getRecords() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECORD_KEY) || "{}");
+    return {
+      generated: Array.isArray(parsed.generated) ? parsed.generated : [],
+      confirmed: Array.isArray(parsed.confirmed) ? parsed.confirmed : []
+    };
+  } catch {
+    return { generated: [], confirmed: [] };
+  }
+}
+
+function setRecords(records) {
+  const compact = {
+    generated: (records.generated || []).slice(0, 60),
+    confirmed: (records.confirmed || []).slice(0, 60)
+  };
+  localStorage.setItem(RECORD_KEY, JSON.stringify(compact));
+  renderRecords();
+}
+
+function makeRecord(type, payload, confirmed = false) {
+  const teacherName = fields.teacherName.value.trim() || "未填姓名";
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    teacherName,
+    type,
+    confirmed,
+    theme: getTheme(),
+    title: getResultTitle(payload),
+    summary: getResultSummary(payload),
+    createdAt: new Date().toISOString(),
+    payload
+  };
+}
+
+function saveGenerated(type, payload) {
+  const records = getRecords();
+  records.generated.unshift(makeRecord(type, payload, false));
+  setRecords(records);
+}
+
+function confirmCurrentSelection() {
+  const teacherName = requireTeacherName();
+  const records = getRecords();
+  const selections = state.checkedSuggestions.length ? state.checkedSuggestions : [];
+  const confirmed = [];
+
+  if (selections.length) {
+    selections.forEach((item) => confirmed.push(makeRecord("已選構思", item, true)));
+  } else if (state.selectedSuggestion) {
+    confirmed.push(makeRecord("已套用構思", state.selectedSuggestion, true));
+  } else if (state.lastResult) {
+    confirmed.push(makeRecord(getResultModeName(state.lastResult), state.lastResult, true));
+  }
+
+  if (!confirmed.length) {
+    setStatus("請先生成結果，並至少勾選或套用一個結果，才可以確認。", "err");
+    return;
+  }
+
+  records.confirmed.unshift(...confirmed);
+  setRecords(records);
+  setStatus(`${teacherName} 已確認 ${confirmed.length} 個結果。`, "ok");
+  activateTab("records");
+}
+
+function renderRecords() {
+  const panel = $("records");
+  if (!panel) return;
+  const records = getRecords();
+  const wrap = document.createElement("div");
+  wrap.className = "recordBoard";
+  wrap.appendChild(renderRecordSection("老師已確認的結果", records.confirmed, true));
+  wrap.appendChild(renderRecordSection("老師曾生成的結果", records.generated, false));
+  panel.replaceChildren(wrap);
+}
+
+function renderRecordSection(title, rows, confirmed) {
+  const section = document.createElement("section");
+  section.className = "recordSection";
+  section.innerHTML = `<h3>${escapeHtml(title)}</h3>`;
+  if (!rows.length) {
+    const empty = document.createElement("p");
+    empty.className = "mutedText";
+    empty.textContent = confirmed ? "暫時未有已確認結果。" : "暫時未有生成記錄。";
+    section.appendChild(empty);
+    return section;
+  }
+  rows.slice(0, 20).forEach((record) => {
+    const card = document.createElement("article");
+    card.className = `recordCard ${confirmed ? "confirmed" : ""}`;
+    card.innerHTML = `
+      <div>
+        <p class="eyebrow">${escapeHtml(record.type || "記錄")}</p>
+        <h3>${escapeHtml(record.title || "未命名結果")}</h3>
+        <p>${escapeHtml(record.summary || "")}</p>
+      </div>
+      <ul class="metaList">
+        <li><strong>老師：</strong>${escapeHtml(record.teacherName || "")}</li>
+        <li><strong>主題：</strong>${escapeHtml(record.theme || "")}</li>
+        <li><strong>時間：</strong>${escapeHtml(formatTime(record.createdAt))}</li>
+      </ul>
+    `;
+    section.appendChild(card);
+  });
+  return section;
 }
 
 async function checkHealth() {
@@ -62,10 +204,12 @@ async function checkHealth() {
 }
 
 async function suggestThemes() {
+  const teacherName = requireTeacherName();
   setStatus("Alibaba/Qwen 正在搜尋及生成 10 個題目...", "busy");
   setBusy(true);
   try {
     const data = await api("/api/suggest-themes", {
+      teacherName,
       theme: getTheme(),
       subject: fields.subject.value,
       grade: fields.grade.value,
@@ -74,8 +218,10 @@ async function suggestThemes() {
       preferredHardware: fields.hardware.value
     });
     state.lastResult = data;
+    state.checkedSuggestions = [];
     setStatus(`已生成 ${Array.isArray(data.suggestions) ? data.suggestions.length : 0} 個建議。`, "ok");
     renderSuggestions(data);
+    saveGenerated("建議", data);
     activateTab("suggestions");
   } finally {
     setBusy(false);
@@ -83,10 +229,12 @@ async function suggestThemes() {
 }
 
 async function scoreConcept() {
+  const teacherName = requireTeacherName();
   setStatus("Alibaba/Qwen 正在按 100 分 rubric 評估構思...", "busy");
   setBusy(true);
   try {
     const data = await api("/api/score-concept", {
+      teacherName,
       title: state.selectedSuggestion?.title || "",
       theme: getTheme(),
       problem: fields.problem.value,
@@ -98,6 +246,7 @@ async function scoreConcept() {
     state.lastResult = data;
     setStatus(`評分完成：${data.totalScore ?? data.score ?? "已完成"} / 100`, "ok");
     renderScore(data);
+    saveGenerated("評分", data);
     activateTab("score");
   } finally {
     setBusy(false);
@@ -105,10 +254,12 @@ async function scoreConcept() {
 }
 
 async function buildProposal() {
+  const teacherName = requireTeacherName();
   setStatus("ChatGPT 正在生成完整作品構思書...", "busy");
   setBusy(true);
   try {
     const data = await api("/api/build-proposal", {
+      teacherName,
       title: state.selectedSuggestion?.title || "",
       theme: getTheme(),
       problem: fields.problem.value,
@@ -121,6 +272,7 @@ async function buildProposal() {
     state.lastResult = data;
     setStatus("完整構思書已生成。", "ok");
     renderProposal(data);
+    saveGenerated("構思書", data);
     activateTab("proposal");
   } finally {
     setBusy(false);
@@ -128,10 +280,12 @@ async function buildProposal() {
 }
 
 async function generatePreviewImage() {
+  const teacherName = requireTeacherName();
   setStatus("GPT Image 2 正在生成低品質產品預覽圖...", "busy");
   setBusy(true);
   try {
     const data = await api("/api/generate-preview-image", {
+      teacherName,
       title: state.selectedSuggestion?.title || "",
       aiWebsite: fields.aiWebsite.value,
       hardware: fields.hardware.value,
@@ -141,6 +295,7 @@ async function generatePreviewImage() {
     state.lastResult = data;
     setStatus("產品預覽圖已生成。", "ok");
     renderImage(data);
+    saveGenerated("預覽圖", data);
     activateTab("image");
   } finally {
     setBusy(false);
@@ -193,6 +348,10 @@ function renderSuggestions(data) {
     const card = document.createElement("article");
     card.className = "resultCard";
     card.innerHTML = `
+      <label class="choiceLine">
+        <input type="checkbox" class="suggestionCheck">
+        <span>選擇此構思作確認候選</span>
+      </label>
       <header>
         <div>
           <h3>${escapeHtml(item.title || `建議 ${index + 1}`)}</h3>
@@ -209,11 +368,24 @@ function renderSuggestions(data) {
       </ul>
       <button type="button" class="selectSuggestion">套用到表單</button>
     `;
-    card.querySelector("button").addEventListener("click", () => selectSuggestion(item));
+    card.querySelector(".suggestionCheck").addEventListener("change", (event) => toggleSuggestionChoice(item, event.target.checked));
+    card.querySelector("button").addEventListener("click", () => {
+      card.querySelector(".suggestionCheck").checked = true;
+      toggleSuggestionChoice(item, true);
+      selectSuggestion(item);
+    });
     wrap.appendChild(card);
   });
   appendSources(wrap, data.sources);
   $("suggestions").replaceChildren(wrap);
+}
+
+function toggleSuggestionChoice(item, checked) {
+  const title = item.title || "";
+  state.checkedSuggestions = state.checkedSuggestions.filter((row) => (row.title || "") !== title);
+  if (checked) state.checkedSuggestions.push(item);
+  if (state.checkedSuggestions.length && !state.selectedSuggestion) state.selectedSuggestion = state.checkedSuggestions[0];
+  setStatus(`已選擇 ${state.checkedSuggestions.length} 個構思，可按「確認」。`, "ok");
 }
 
 function selectSuggestion(item) {
@@ -392,6 +564,48 @@ function toMarkdown(value, depth = 0) {
     const prefix = depth === 0 ? `## ${title}` : `**${title}**`;
     return `${prefix}\n${toMarkdown(item, depth + 1)}`;
   }).join("\n\n");
+}
+
+function getResultModeName(value) {
+  if (!value || typeof value !== "object") return "結果";
+  if (value.mode === "suggest") return "建議";
+  if (value.mode === "score") return "評分";
+  if (value.mode === "proposal") return "構思書";
+  if (value.mode === "preview-image") return "預覽圖";
+  return "結果";
+}
+
+function getResultTitle(value) {
+  if (!value || typeof value !== "object") return "未命名結果";
+  if (value.title) return value.title;
+  if (value.proposal?.title) return value.proposal.title;
+  if (Array.isArray(value.suggestions) && value.suggestions[0]?.title) return `${value.suggestions.length} 個題目建議`;
+  if (value.totalScore || value.score) return `評分 ${value.totalScore ?? value.score} / 100`;
+  if (value.imageUrl || value.b64Json) return "產品預覽圖";
+  return getResultModeName(value);
+}
+
+function getResultSummary(value) {
+  if (!value || typeof value !== "object") return "";
+  if (value.problem) return value.problem;
+  if (value.summary) return value.summary;
+  if (value.aiWebsite) return value.aiWebsite;
+  if (Array.isArray(value.suggestions)) return value.suggestions.slice(0, 3).map((item) => item.title).filter(Boolean).join("、");
+  if (Array.isArray(value.improvements)) return value.improvements.slice(0, 2).join("、");
+  if (value.proposal) return asText(value.proposal).slice(0, 160);
+  return asText(value).slice(0, 160);
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  try {
+    return new Intl.DateTimeFormat("zh-Hant-HK", {
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
 }
 
 function asText(value) {
