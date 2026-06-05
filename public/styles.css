@@ -20,7 +20,10 @@ html, body {
   min-height: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  background: var(--bg);
+  background:
+    linear-gradient(180deg, rgba(245,247,242,.78), rgba(245,247,242,.94) 420px, var(--bg) 760px),
+    url("/assets/ai-steam-invention-background.png") center top / cover fixed no-repeat,
+    var(--bg);
   color: var(--ink);
   font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
 }
@@ -120,13 +123,13 @@ img {
 
 .introBand {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: center;
   min-height: 260px;
   padding: 30px;
   overflow: hidden;
-  background: #19302c;
+  background: linear-gradient(90deg, rgba(25,48,44,.94), rgba(25,48,44,.72));
   color: #f7fbf7;
   border: 1px solid #1f433c;
   border-radius: 8px;
@@ -149,8 +152,8 @@ img {
 h1, h2, h3, p { margin-top: 0; }
 
 h1 {
-  max-width: 780px;
-  font-size: clamp(32px, 5vw, 64px);
+  max-width: 920px;
+  font-size: clamp(32px, 4.5vw, 58px);
   line-height: 1.08;
   margin-bottom: 14px;
   letter-spacing: 0;
@@ -257,9 +260,13 @@ input:focus, textarea:focus, select:focus {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   padding: 4px 18px 18px;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .outputPanel {
@@ -284,6 +291,39 @@ input:focus, textarea:focus, select:focus {
   flex-wrap: wrap;
   gap: 8px;
   padding: 14px 18px 0;
+}
+
+.workflowSteps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 18px 0;
+}
+
+.flowStep {
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8faf9;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.flowStep.active {
+  border-color: var(--green);
+  background: #e7f5f0;
+  color: var(--green);
+}
+
+.flowStep.done {
+  border-color: #b7d9c9;
+  background: #f1faf5;
+  color: var(--ink);
 }
 
 .tab {
@@ -424,6 +464,12 @@ input:focus, textarea:focus, select:focus {
   padding: 6px 10px;
   background: #fff7eb;
   border-color: #edc989;
+}
+
+.selectSuggestion.selected {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
 }
 
 .recordBoard {
@@ -611,6 +657,10 @@ input:focus, textarea:focus, select:focus {
   }
 
   .actions, .suggestionGrid, .sensorGrid, .hardwareStrip, .recordBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowSteps {
     grid-template-columns: 1fr;
   }
 

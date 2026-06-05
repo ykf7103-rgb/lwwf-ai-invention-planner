@@ -34,7 +34,6 @@
           <h1>由主題到可展示的 AI 發明品</h1>
           <p>每個構思都同時規劃 laptop AI 網站、micro:bit / Robotbit / KittenBot 硬件、IoT 互動、評分和比賽賣點。</p>
         </div>
-        <img src="/assets/ai-invention-showcase-button.png" alt="" class="introVisual">
       </div>
 
       <form id="conceptForm" class="toolGrid">
@@ -164,10 +163,10 @@
           </label>
 
           <div class="actions">
-            <button id="suggestBtn" type="button" class="primary">生成10個題目</button>
-            <button id="scoreBtn" type="button">評分及改良</button>
-            <button id="proposalBtn" type="button">生成構思書</button>
-            <button id="imageBtn" type="button">生成預覽圖</button>
+            <button id="suggestBtn" type="button" class="primary">生成10個構思</button>
+            <button id="scoreBtn" type="button" class="stepAction hidden">下一步：評分及改良</button>
+            <button id="proposalBtn" type="button" class="stepAction hidden">下一步：生成構思書</button>
+            <button id="imageBtn" type="button" class="stepAction hidden">下一步：生成預覽圖</button>
           </div>
         </section>
 
@@ -182,8 +181,16 @@
               <button id="downloadJsonBtn" type="button" title="下載JSON">JSON</button>
               <button id="downloadMdBtn" type="button" title="下載Markdown">MD</button>
               <button id="printBtn" type="button" title="列印或另存PDF">列印</button>
-              <button id="confirmBtn" type="button" class="primary" title="確認所選結果">確認</button>
+              <button id="confirmBtn" type="button" class="primary hidden" title="確認所選結果">確認結果</button>
             </div>
+          </div>
+
+          <div class="workflowSteps" aria-label="工作流程">
+            <span class="flowStep active" data-flow="input">1 輸入</span>
+            <span class="flowStep" data-flow="suggested">2 選擇構思</span>
+            <span class="flowStep" data-flow="scored">3 評分改良</span>
+            <span class="flowStep" data-flow="proposal">4 構思書</span>
+            <span class="flowStep" data-flow="image">5 預覽/確認</span>
           </div>
 
           <nav class="tabs" aria-label="結果頁籤">

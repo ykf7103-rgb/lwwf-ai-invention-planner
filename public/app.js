@@ -4,7 +4,11 @@ const state = {
   lastResult: null,
   selectedSuggestion: null,
   checkedSuggestions: [],
-  activeTab: "suggestions"
+  activeTab: "suggestions",
+  workflow: "input",
+  scoreResult: null,
+  proposalResult: null,
+  imageResult: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -52,6 +56,7 @@ function init() {
   });
   renderEmpty();
   renderRecords();
+  updateWorkflow("input");
   loadCatalog();
 }
 
@@ -219,9 +224,14 @@ async function suggestThemes() {
     });
     state.lastResult = data;
     state.checkedSuggestions = [];
+    state.selectedSuggestion = null;
+    state.scoreResult = null;
+    state.proposalResult = null;
+    state.imageResult = null;
     setStatus(`已生成 ${Array.isArray(data.suggestions) ? data.suggestions.length : 0} 個建議。`, "ok");
     renderSuggestions(data);
     saveGenerated("建議", data);
+    updateWorkflow("suggested");
     activateTab("suggestions");
   } finally {
     setBusy(false);
@@ -230,6 +240,11 @@ async function suggestThemes() {
 
 async function scoreConcept() {
   const teacherName = requireTeacherName();
+  if (!state.selectedSuggestion) {
+    setStatus("請先在 10 個建議中按「選擇這個構思」，才可評分及改良。", "err");
+    activateTab("suggestions");
+    return;
+  }
   setStatus("Alibaba/Qwen 正在按 100 分 rubric 評估構思...", "busy");
   setBusy(true);
   try {
@@ -244,9 +259,11 @@ async function scoreConcept() {
       materials: fields.iot.value
     });
     state.lastResult = data;
+    state.scoreResult = data;
     setStatus(`評分完成：${data.totalScore ?? data.score ?? "已完成"} / 100`, "ok");
     renderScore(data);
     saveGenerated("評分", data);
+    updateWorkflow("scored");
     activateTab("score");
   } finally {
     setBusy(false);
@@ -255,6 +272,11 @@ async function scoreConcept() {
 
 async function buildProposal() {
   const teacherName = requireTeacherName();
+  if (!state.scoreResult) {
+    setStatus("請先完成「評分及改良」，才生成構思書。", "err");
+    activateTab("score");
+    return;
+  }
   setStatus("ChatGPT 正在生成完整作品構思書...", "busy");
   setBusy(true);
   try {
@@ -267,12 +289,14 @@ async function buildProposal() {
       hardware: fields.hardware.value,
       iot: fields.iot.value,
       selectedSuggestion: state.selectedSuggestion,
-      scoreResult: state.lastResult?.mode === "score" ? state.lastResult : null
+      scoreResult: state.scoreResult
     });
     state.lastResult = data;
+    state.proposalResult = data;
     setStatus("完整構思書已生成。", "ok");
     renderProposal(data);
     saveGenerated("構思書", data);
+    updateWorkflow("proposal");
     activateTab("proposal");
   } finally {
     setBusy(false);
@@ -281,6 +305,11 @@ async function buildProposal() {
 
 async function generatePreviewImage() {
   const teacherName = requireTeacherName();
+  if (!state.proposalResult) {
+    setStatus("請先生成構思書，才生成產品預覽圖。", "err");
+    activateTab("proposal");
+    return;
+  }
   setStatus("GPT Image 2 正在生成低品質產品預覽圖...", "busy");
   setBusy(true);
   try {
@@ -293,9 +322,11 @@ async function generatePreviewImage() {
       selectedSuggestion: state.selectedSuggestion
     });
     state.lastResult = data;
+    state.imageResult = data;
     setStatus("產品預覽圖已生成。", "ok");
     renderImage(data);
     saveGenerated("預覽圖", data);
+    updateWorkflow("image");
     activateTab("image");
   } finally {
     setBusy(false);
@@ -366,7 +397,7 @@ function renderSuggestions(data) {
         <li><strong>材料：</strong>${escapeHtml(asText(item.materials))}</li>
         <li><strong>可行步驟：</strong>${escapeHtml(asText(item.makingSteps || item.steps))}</li>
       </ul>
-      <button type="button" class="selectSuggestion">套用到表單</button>
+      <button type="button" class="selectSuggestion">選擇這個構思</button>
     `;
     card.querySelector(".suggestionCheck").addEventListener("change", (event) => toggleSuggestionChoice(item, event.target.checked));
     card.querySelector("button").addEventListener("click", () => {
@@ -390,11 +421,24 @@ function toggleSuggestionChoice(item, checked) {
 
 function selectSuggestion(item) {
   state.selectedSuggestion = item;
+  state.scoreResult = null;
+  state.proposalResult = null;
+  state.imageResult = null;
   fields.problem.value = item.problem || item.summary || fields.problem.value;
   fields.aiWebsite.value = item.aiWebsite || item.software || fields.aiWebsite.value;
   fields.hardware.value = item.hardware || item.device || fields.hardware.value;
   fields.iot.value = item.iotInteraction || item.iot || fields.iot.value;
-  setStatus(`已套用：${item.title || "建議"}`, "ok");
+  document.querySelectorAll(".selectSuggestion").forEach((button) => {
+    button.classList.remove("selected");
+    button.textContent = "選擇這個構思";
+  });
+  const clicked = Array.from(document.querySelectorAll(".selectSuggestion")).find((button) => button.closest(".resultCard")?.querySelector("h3")?.textContent === (item.title || ""));
+  if (clicked) {
+    clicked.classList.add("selected");
+    clicked.textContent = "已選擇";
+  }
+  setStatus(`已選擇：${item.title || "建議"}。請按下一步評分及改良。`, "ok");
+  updateWorkflow("selected");
 }
 
 function renderScore(data) {
@@ -530,6 +574,24 @@ function setStatus(message, kind = "") {
 function setBusy(busy) {
   ["suggestBtn", "scoreBtn", "proposalBtn", "imageBtn"].forEach((id) => {
     $(id).disabled = busy;
+  });
+}
+
+function updateWorkflow(step) {
+  state.workflow = step;
+  const order = ["input", "suggested", "selected", "scored", "proposal", "image"];
+  const flowOrder = ["input", "suggested", "scored", "proposal", "image"];
+  const currentIndex = order.indexOf(step);
+  const flowIndex = step === "selected" ? 1 : flowOrder.indexOf(step);
+
+  $("scoreBtn").classList.toggle("hidden", step !== "selected");
+  $("proposalBtn").classList.toggle("hidden", step !== "scored");
+  $("imageBtn").classList.toggle("hidden", step !== "proposal");
+  $("confirmBtn").classList.toggle("hidden", !(step === "proposal" || step === "image"));
+
+  document.querySelectorAll(".flowStep").forEach((item, index) => {
+    item.classList.toggle("active", index === flowIndex);
+    item.classList.toggle("done", index < flowIndex && currentIndex > 0);
   });
 }
 
