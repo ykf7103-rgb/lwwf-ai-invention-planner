@@ -1,0 +1,19 @@
+name = "lwwf-ai-invention-planner"
+main = "src/worker.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+AI_PROXY_BASE = "https://lwwf-ai-proxy.lwwfaiteams.workers.dev"
+LWWF_PROJECT = "ai-invention-planner"
+OPENAI_TEXT_MODEL = "gpt-4o-mini"
+IMAGE_MODEL = "gpt-image-2"
+IMAGE_QUALITY = "low"
+IMAGE_SIZE = "1024x1024"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[services]]
+binding = "AI_PROXY"
+service = "lwwf-ai-proxy"

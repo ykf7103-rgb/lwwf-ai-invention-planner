@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI發明品構思助手 | LWWF</title>
+  <meta name="description" content="樂善堂梁黃蕙芳紀念學校 AI/STEAM 發明品構思、評分、構思書及產品預覽工具。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/assets/LWWFPNG.png" alt="LWWF" class="crest">
+      <div>
+        <strong>AI發明品構思助手</strong>
+        <span>2026-2027 AI/STEAM 雙軌作品設計</span>
+      </div>
+    </div>
+    <div class="auth">
+      <input id="teacherPass" type="password" autocomplete="current-password" placeholder="教師通行碼" aria-label="教師通行碼">
+      <button id="savePass" type="button" class="iconButton" title="保存本次通行碼">保存</button>
+      <button id="healthBtn" type="button" class="iconButton" title="檢查網站狀態">狀態</button>
+    </div>
+  </header>
+
+  <main class="appShell">
+    <section class="workspace">
+      <div class="introBand">
+        <div class="introCopy">
+          <p class="kicker">同事共備工具</p>
+          <h1>由主題到可展示的 AI 發明品</h1>
+          <p>每個構思都同時規劃 laptop AI 網站、micro:bit / Robotbit / KittenBot 硬件、IoT 互動、評分和比賽賣點。</p>
+        </div>
+        <img src="/assets/ai-invention-showcase-button.png" alt="" class="introVisual">
+      </div>
+
+      <form id="conceptForm" class="toolGrid">
+        <section class="panel inputPanel">
+          <div class="panelHead">
+            <div>
+              <p class="eyebrow">Step 1</p>
+              <h2>輸入方向</h2>
+            </div>
+            <span class="badge">不儲存</span>
+          </div>
+
+          <label>
+            主題方向
+            <select id="theme">
+              <option value="校園安全">校園安全</option>
+              <option value="環保節能">環保節能</option>
+              <option value="健康生活">健康生活</option>
+              <option value="閱讀推廣">閱讀推廣</option>
+              <option value="數學學習">數學學習</option>
+              <option value="中華文化">中華文化</option>
+              <option value="關愛校園">關愛校園</option>
+              <option value="生態保育">生態保育</option>
+              <option value="其他">其他</option>
+            </select>
+          </label>
+
+          <label>
+            自訂主題或學科
+            <input id="subject" type="text" placeholder="例：P5常識、視藝、圖書館、午膳秩序">
+          </label>
+
+          <label>
+            年級/學生對象
+            <input id="grade" type="text" value="P5-P6">
+          </label>
+
+          <label>
+            想解決的真實問題
+            <textarea id="problem" rows="4" placeholder="例：同學在轉角位容易碰撞，老師希望有即時提示和數據記錄。"></textarea>
+          </label>
+
+          <label>
+            AI 網站可做到的功能
+            <textarea id="aiWebsite" rows="4" placeholder="例：用 laptop 開啟網站，輸入/上載資料後，AI 分析風險、給建議、展示圖表。"></textarea>
+          </label>
+
+          <label>
+            Micro:bit / Sensor 實體裝置
+            <textarea id="hardware" rows="4" placeholder="例：micro:bit + Robotbit + ToF距離感測器 + LED/蜂鳴器，偵測距離並觸發提示。"></textarea>
+          </label>
+
+          <label>
+            IoT 互動與材料限制
+            <textarea id="iot" rows="3" placeholder="例：感測器數據經序列埠或QR記錄到網站，展示即時分數；材料以紙板、3D打印、LED為主。"></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="suggestBtn" type="button" class="primary">生成10個題目</button>
+            <button id="scoreBtn" type="button">評分及改良</button>
+            <button id="proposalBtn" type="button">生成構思書</button>
+            <button id="imageBtn" type="button">生成預覽圖</button>
+          </div>
+        </section>
+
+        <section class="panel outputPanel">
+          <div class="panelHead">
+            <div>
+              <p class="eyebrow">Step 2</p>
+              <h2>AI 輸出</h2>
+            </div>
+            <div class="utility">
+              <button id="copyBtn" type="button" title="複製目前結果">複製</button>
+              <button id="downloadJsonBtn" type="button" title="下載JSON">JSON</button>
+              <button id="downloadMdBtn" type="button" title="下載Markdown">MD</button>
+              <button id="printBtn" type="button" title="列印或另存PDF">列印</button>
+            </div>
+          </div>
+
+          <nav class="tabs" aria-label="結果頁籤">
+            <button type="button" class="tab active" data-tab="suggestions">建議</button>
+            <button type="button" class="tab" data-tab="score">評分</button>
+            <button type="button" class="tab" data-tab="proposal">構思書</button>
+            <button type="button" class="tab" data-tab="image">預覽圖</button>
+            <button type="button" class="tab" data-tab="sensors">硬件</button>
+          </nav>
+
+          <div id="status" class="statusLine">準備就緒</div>
+          <div id="suggestions" class="tabPanel active"></div>
+          <div id="score" class="tabPanel"></div>
+          <div id="proposal" class="tabPanel"></div>
+          <div id="image" class="tabPanel"></div>
+          <div id="sensors" class="tabPanel"></div>
+        </section>
+      </form>
+    </section>
+  </main>
+
+  <template id="emptyTemplate">
+    <div class="empty">
+      <img src="/assets/ai-plant-guardian-button.png" alt="">
+      <div>
+        <h3>先選主題，再生成建議</h3>
+        <p>建議會同時列出分數、AI網站功能、micro:bit硬件、材料、IoT互動和可落地步驟。</p>
+      </div>
+    </div>
+  </template>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
